@@ -1,7 +1,13 @@
 name: Update Backend Lock
 
 on:
+  push:
+    branches:
+      - backend-ci-test
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update-lock:
@@ -27,8 +33,16 @@ jobs:
         working-directory: starter/backend
         run: grep -A5 '"uwsgi"' Pipfile.lock
 
-      - name: Upload lock file
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-pipfile-lock
-          path: starter/backend/Pipfile.lock
+      - name: Commit updated lock file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add starter/backend/Pipfile.lock
+
+          if git diff --cached --quiet; then
+            echo "No lock file changes."
+          else
+            git commit -m "Update backend dependency lock"
+            git push
+          fi
