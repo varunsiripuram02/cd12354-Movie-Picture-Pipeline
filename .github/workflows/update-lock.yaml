@@ -1,0 +1,34 @@
+name: Update Backend Lock
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-lock:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Pipenv
+        run: pip install pipenv
+
+      - name: Update lock file
+        working-directory: starter/backend
+        run: pipenv lock
+
+      - name: Show uWSGI version
+        working-directory: starter/backend
+        run: grep -A5 '"uwsgi"' Pipfile.lock
+
+      - name: Upload lock file
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-pipfile-lock
+          path: starter/backend/Pipfile.lock
