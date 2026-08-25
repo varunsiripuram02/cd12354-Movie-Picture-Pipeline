@@ -469,3 +469,38 @@ kustomize build | kubectl apply -f -
 ## License
 
 [License](LICENSE.md)
+## Project Evidence
+
+### GitHub Repository
+https://github.com/varunsiripuram02/cd12354-Movie-Picture-Pipeline
+
+### Deployed Applications
+
+Frontend:
+http://a7f6ab208c56d4b6b9abed31ceca4da0-14598355.us-east-1.elb.amazonaws.com
+
+Backend API:
+http://a35f3c9c5d8a8429c901e843040765f6-949209305.us-east-1.elb.amazonaws.com/movies
+
+### GitHub Actions Workflows
+
+The project includes four required GitHub Actions workflows:
+
+- Backend Continuous Integration
+- Backend Continuous Deployment
+- Frontend Continuous Integration
+- Frontend Continuous Deployment
+
+All four workflows have successful runs.
+
+### Evidence
+
+The `Screenshots` folder contains evidence for:
+
+- Backend CI successful run
+- Backend CD successful run
+- Frontend CI successful run
+- Frontend CD successful run
+- Working backend `/movies` API
+- Working frontend Movie List
+- `kubectl get all` showing healthy deployments, services, and running pods
