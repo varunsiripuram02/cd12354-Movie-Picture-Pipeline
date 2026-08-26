@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
+
   lint:
     name: Backend Lint
     runs-on: ubuntu-latest
@@ -37,6 +38,7 @@ jobs:
 
       - name: Run lint
         run: pipenv run lint
+
 
   test:
     name: Backend Test
@@ -66,8 +68,9 @@ jobs:
       - name: Run tests
         run: pipenv run test
 
-  deploy:
-    name: Backend CD
+
+  build:
+    name: Backend Build
     runs-on: ubuntu-latest
 
     needs:
@@ -92,15 +95,37 @@ jobs:
       - name: Build backend Docker image
         working-directory: starter/backend
         run: |
-          docker build -t backend:latest .
+          docker build -t backend:${{ github.sha }} .
 
       - name: Tag backend Docker image
         run: |
-          docker tag backend:latest ${{ secrets.BACKEND_ECR_REPOSITORY }}:latest
+          docker tag backend:${{ github.sha }} \
+            ${{ secrets.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Push backend Docker image
         run: |
-          docker push ${{ secrets.BACKEND_ECR_REPOSITORY }}:latest
+          docker push \
+            ${{ secrets.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}
+
+
+  deploy:
+    name: Backend Deploy
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
 
       - name: Update kubeconfig
         run: |
@@ -108,6 +133,13 @@ jobs:
             --name ${{ secrets.EKS_CLUSTER_NAME }} \
             --region us-east-1
 
-      - name: Deploy backend to Kubernetes
+      - name: Update Kubernetes image
+        working-directory: starter/backend/k8s
         run: |
-          kubectl apply -k starter/backend/k8s
+          kustomize edit set image \
+            backend=${{ secrets.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Deploy backend to Kubernetes
+        working-directory: starter/backend/k8s
+        run: |
+          kustomize build | kubectl apply -f -
